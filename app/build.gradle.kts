@@ -22,6 +22,8 @@ android {
         buildFeatures {
             buildConfig = true
         }
+
+        buildConfigField("String", "API_KEY", "\"${project.properties["API_KEY"]}\"")
     }
 
     buildTypes {
@@ -70,4 +72,6 @@ dependencies {
     implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.espresso.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v262)
 }
