@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">MyCalculator</string>
+
+    <string-array name="currency_array">
+        <item>USD</item>
+        <item>EUR</item>
+        <item>GBP</item>
+        <item>JPY</item>
+    </string-array>
+
+</resources>
