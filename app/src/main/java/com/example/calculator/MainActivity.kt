@@ -45,6 +45,10 @@ class MainActivity : AppCompatActivity() {
 
         resultTextView = binding.result
 
+        //show a Toast message when the user tries to type beyond the maximum length
+        val maxLength = 10
+        resultTextView.filters = arrayOf(MaxLengthInputFilter(maxLength, this))
+
         currencyApi = RetrofitInstance.getInstance().create(CurrencyApi::class.java)
 
         initCalculatorButtons()
@@ -53,27 +57,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initCalculatorButtons() {
-        val btnDecimal = binding.btnDecimal
-        val btn0 = binding.btn0
-        val btn1 = binding.btn1
-        val btn2 = binding.btn2
-        val btn3 = binding.btn3
-        val btn4 = binding.btn4
-        val btn5 = binding.btn5
-        val btn6 = binding.btn6
-        val btn7 = binding.btn7
-        val btn8 = binding.btn8
-        val btn9 = binding.btn9
-        val btnPlus = binding.btnPlus
-        val btnMinus = binding.btnMinus
-        val btnMultiply = binding.btnMultiply
-        val btnDivide = binding.btnDivide
-        val btnPercent = binding.btnPercent
-        val btnPower = binding.btnPower
-        val btnRoot = binding.btnRoot
-        val btnClear = binding.btnClear
-        val btnReset = binding.btnReset
-        val btnEquals = binding.btnEquals
+        val numberButtons = listOf(
+            binding.btn0, binding.btn1, binding.btn2, binding.btn3,
+            binding.btn4, binding.btn5, binding.btn6, binding.btn7,
+            binding.btn8, binding.btn9
+        )
 
         val numberListener = View.OnClickListener { v ->
             val textView = v as TextView
@@ -85,44 +73,33 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btn0.setOnClickListener(numberListener)
-        btn1.setOnClickListener(numberListener)
-        btn2.setOnClickListener(numberListener)
-        btn3.setOnClickListener(numberListener)
-        btn4.setOnClickListener(numberListener)
-        btn5.setOnClickListener(numberListener)
-        btn6.setOnClickListener(numberListener)
-        btn7.setOnClickListener(numberListener)
-        btn8.setOnClickListener(numberListener)
-        btn9.setOnClickListener(numberListener)
+        numberButtons.forEach { it.setOnClickListener(numberListener) }
 
-        btnDecimal.setOnClickListener {
-            if (!resultTextView.text.contains('.')) {
-                resultTextView.append(".")
+        binding.btnDecimal.setOnClickListener {
+            if (!binding.result.text.contains('.')) {
+                binding.result.append(".")
             }
         }
+
+        val operationButtons = listOf(
+            binding.btnPlus, binding.btnMinus, binding.btnMultiply,
+            binding.btnDivide, binding.btnPercent, binding.btnPower,
+            binding.btnRoot, binding.btnReset, binding.btnEquals
+        )
 
         val operationListener = View.OnClickListener { v ->
-            val textViewText = (v as TextView).text.toString()
+            val operation = (v as TextView).text.toString()
             if (isUserTyping) {
-                performOperation(resultTextView.text.toString().toDouble(), pendingOperation)
+                performOperation(binding.result.text.toString().toDoubleOrNull() ?: 0.0, pendingOperation)
                 isUserTyping = false
             }
-            pendingOperation = textViewText
+            pendingOperation = operation
         }
 
-        btnPlus.setOnClickListener(operationListener)
-        btnMinus.setOnClickListener(operationListener)
-        btnMultiply.setOnClickListener(operationListener)
-        btnDivide.setOnClickListener(operationListener)
-        btnPercent.setOnClickListener(operationListener)
-        btnPower.setOnClickListener(operationListener)
-        btnRoot.setOnClickListener(operationListener)
-        btnReset.setOnClickListener(operationListener)
-        btnEquals.setOnClickListener(operationListener)
+        operationButtons.forEach { it.setOnClickListener(operationListener) }
 
-        btnClear.setOnClickListener {
-            resultTextView.setText("")
+        binding.btnClear.setOnClickListener {
+            binding.result.text = ""
             operand = null
             pendingOperation = "="
             isUserTyping = false
@@ -214,9 +191,7 @@ class MainActivity : AppCompatActivity() {
             else -> jpyRate
         }
 
-        var valueToRate = operand
-        if(operand == null)
-            valueToRate = resultTextView.text.toString().toDoubleOrNull()
+        val valueToRate = operand ?: binding.result.text.toString().toDoubleOrNull()
 
         if (fromRate != null && toRate != null && valueToRate != null) {
             val convertedValue = valueToRate * (fromRate / toRate)
