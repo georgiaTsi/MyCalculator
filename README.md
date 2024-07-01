@@ -13,4 +13,4 @@ Converts amounts between different currencies using the Fixer API.
 Setup and Installation
 To run the application:
 
-Clone this repository to your local machine using git clone https://github.com/your/repository.git
+Clone this repository to your local machine using git clone https://github.com/georgiaTsi/MyCalculator.git
