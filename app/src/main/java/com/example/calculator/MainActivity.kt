@@ -7,13 +7,13 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-//import androidx.lifecycle.lifecycleScope
 import com.example.calculator.api.CurrencyApi
 import com.example.calculator.api.RetrofitInstance
-import kotlinx.coroutines.*
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.example.calculator.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.DecimalFormat
 
 class MainActivity : AppCompatActivity() {
@@ -36,11 +36,14 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var currencyApi: CurrencyApi
 
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        resultTextView = findViewById(R.id.result)
+        resultTextView = binding.result
 
         currencyApi = RetrofitInstance.getInstance().create(CurrencyApi::class.java)
 
@@ -50,27 +53,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initCalculatorButtons() {
-        val btnDecimal = findViewById<TextView>(R.id.btn_decimal)
-        val btn0 = findViewById<TextView>(R.id.btn_0)
-        val btn1 = findViewById<TextView>(R.id.btn_1)
-        val btn2 = findViewById<TextView>(R.id.btn_2)
-        val btn3 = findViewById<TextView>(R.id.btn_3)
-        val btn4 = findViewById<TextView>(R.id.btn_4)
-        val btn5 = findViewById<TextView>(R.id.btn_5)
-        val btn6 = findViewById<TextView>(R.id.btn_6)
-        val btn7 = findViewById<TextView>(R.id.btn_7)
-        val btn8 = findViewById<TextView>(R.id.btn_8)
-        val btn9 = findViewById<TextView>(R.id.btn_9)
-        val btnPlus = findViewById<TextView>(R.id.btn_plus)
-        val btnMinus = findViewById<TextView>(R.id.btn_minus)
-        val btnMultiply = findViewById<TextView>(R.id.btn_multiply)
-        val btnDivide = findViewById<TextView>(R.id.btn_divide)
-        val btnPercent = findViewById<TextView>(R.id.btn_percent)
-        val btnPower = findViewById<TextView>(R.id.btn_power)
-        val btnRoot = findViewById<TextView>(R.id.btn_root)
-        val btnClear = findViewById<TextView>(R.id.btn_clear)
-        val btnReset = findViewById<TextView>(R.id.btn_reset)
-        val btnEquals = findViewById<TextView>(R.id.btn_equals)
+        val btnDecimal = binding.btnDecimal
+        val btn0 = binding.btn0
+        val btn1 = binding.btn1
+        val btn2 = binding.btn2
+        val btn3 = binding.btn3
+        val btn4 = binding.btn4
+        val btn5 = binding.btn5
+        val btn6 = binding.btn6
+        val btn7 = binding.btn7
+        val btn8 = binding.btn8
+        val btn9 = binding.btn9
+        val btnPlus = binding.btnPlus
+        val btnMinus = binding.btnMinus
+        val btnMultiply = binding.btnMultiply
+        val btnDivide = binding.btnDivide
+        val btnPercent = binding.btnPercent
+        val btnPower = binding.btnPower
+        val btnRoot = binding.btnRoot
+        val btnClear = binding.btnClear
+        val btnReset = binding.btnReset
+        val btnEquals = binding.btnEquals
 
         val numberListener = View.OnClickListener { v ->
             val textView = v as TextView
@@ -155,17 +158,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Ensure that numbers are displayed without unnecessary decimal places
+    //ensure that numbers are displayed without unnecessary decimal places
     fun formatNumber(number: Double?): String {
         val df = DecimalFormat("#.##########")
         return if (number != null) df.format(number) else ""
     }
 
     private fun initCurrencyViews() {
-        val spinnerFrom: Spinner = findViewById(R.id.spinner_from)
-        val spinnerTo: Spinner = findViewById(R.id.spinner_to)
-        val calculateButton: Button = findViewById(R.id.button_calculate)
-        val resultCalculateTextView: TextView = findViewById(R.id.textview_calculate_result)
+        val spinnerFrom: Spinner = binding.spinnerFrom
+        val spinnerTo: Spinner = binding.spinnerTo
+        val calculateButton: Button = binding.buttonCalculate
+        val resultCalculateTextView: TextView = binding.textviewCalculateResult
 
         calculateButton.setOnClickListener { v ->
             try {
@@ -184,7 +187,7 @@ class MainActivity : AppCompatActivity() {
         if (usdRate == null && eurRate == null) {
             fetchRates(object : OnRatesUpdatedCallback {
                 override fun onRatesUpdated() {
-                    // This block will be executed only after the rates are updated
+                    //this will be executed only after the rates are updated
                     performConversion(resultCalculateTextView, fromValue, toValue)
                 }
             })
@@ -222,67 +225,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchRates(callback: OnRatesUpdatedCallback) {
-        lifecycleScope.launch(Dispatchers.IO) { // Launch coroutine on IO dispatcher
+        CoroutineScope(Dispatchers.IO).launch { //CoroutineScope to launch a coroutine in the IO context
             try {
-                val response = currencyApi.getLatestRates(BuildConfig.API_KEY)
+                val response = currencyApi.getLatestRates(BuildConfig.API_KEY).execute()
                 if (response.isSuccessful) {
                     val rates = response.body()?.rates
-                    // Update rates on the main thread
-                    withContext(Dispatchers.Main) {
-                        usdRate = rates?.get("USD")
-                        eurRate = rates?.get("EUR")
-                        gbpRate = rates?.get("GBP")
-                        jpyRate = rates?.get("JPY")
 
+                    usdRate = rates?.get("USD")
+                    eurRate = rates?.get("EUR")
+                    gbpRate = rates?.get("GBP")
+                    jpyRate = rates?.get("JPY")
+
+                    withContext(Dispatchers.Main) { //switch to Main context to update UI
                         callback.onRatesUpdated()
                     }
                 } else {
-                    withContext(Dispatchers.Main) { // Handle unsuccessful responseon the main thread
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@MainActivity,
-                            "Error fetching rates",
+                            "Error: Response not successful",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT)
+                    Toast.makeText(this@MainActivity, "Error: " + e.message, Toast.LENGTH_SHORT)
                         .show()
                 }
             }
         }
     }
-
-
-//        val call = currencyApi.getLatestRates(BuildConfig.API_KEY)
-//        call.enqueue(object : Callback<com.example.calculator.api.CurrencyResponse> {
-//            override fun onResponse(
-//                call: Call<com.example.calculator.api.CurrencyResponse>,
-//                response: Response<com.example.calculator.api.CurrencyResponse>) {
-//                if (response.isSuccessful) {
-//                    try {
-//                        val rates = response.body()?.rates
-//
-//                        usdRate = rates?.get("USD")
-//                        eurRate = rates?.get("EUR")
-//                        gbpRate = rates?.get("GBP")
-//                        jpyRate = rates?.get("JPY")
-//
-//                        callback.onRatesUpdated()
-//                    } catch (e: Exception) {
-//                        Toast.makeText(
-//                            this@MainActivity,
-//                            "Error: " + e.message,
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//                    }
-//                }
-//            }
-//
-//            override fun onFailure(call: Call<com.example.calculator.api.CurrencyResponse>, t: Throwable) {
-//                Toast.makeText(this@MainActivity, "Error: " + t.message, Toast.LENGTH_SHORT).show()
-//            }
-//        })
-//    }
 }

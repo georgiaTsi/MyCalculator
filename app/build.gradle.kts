@@ -21,6 +21,7 @@ android {
 
         buildFeatures {
             buildConfig = true
+            viewBinding = true
         }
 
         buildConfigField("String", "API_KEY", "\"${project.properties["API_KEY"]}\"")
@@ -74,4 +75,5 @@ dependencies {
     testImplementation(libs.androidx.espresso.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.runtime.ktx.v262)
+    implementation(libs.retrofit2.kotlin.coroutines.adapter)
 }
